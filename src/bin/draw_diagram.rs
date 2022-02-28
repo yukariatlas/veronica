@@ -3,16 +3,15 @@ extern crate getopts;
 use std::rc::Rc;
 
 use veronica::config::config;
-use veronica::core::backtesting;
 use veronica::storage::backend;
-use veronica::crawler::finmind;
-use veronica::strategy::strategy;
+use veronica::strategy::strategy::{self, StrategyAPI};
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let mut opts = getopts::Options::new();
 
     opts.reqopt("c", "config", "set config path", "");
+    opts.reqopt("s", "stock_id", "set stock id", "");
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => { m }
@@ -22,10 +21,10 @@ fn main() {
         }
     };
 
+    let stock_id = matches.opt_str("s").unwrap();
     let config = config::load_config(&matches.opt_str("c").unwrap()).unwrap();
-    let crawler = Rc::new(finmind::Finmind::new(&config.finmind_token));
     let backend_op = Rc::new(backend::SledBackend::new(&config.db_path).unwrap());
-    let mut backtesting = backtesting::Backtesting::new(config, crawler, backend_op, strategy::Strategies::BollingerBand);
+    let strategy = Rc::new(strategy::StrategyFactory::get(strategy::Strategies::BollingerBand, backend_op.clone()));
 
-    backtesting.run(chrono::NaiveDate::from_ymd(2021, 6, 1), chrono::NaiveDate::from_ymd(2021, 12, 31));
+    strategy.draw_view(&stock_id).unwrap();
 }

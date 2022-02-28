@@ -4,13 +4,12 @@ use std::rc::Rc;
 use serde::{Serialize, Deserialize};
 
 use crate::config::config;
-use crate::crawler::finmind;
+use crate::crawler::crawler;
 use crate::export::export;
 use crate::strategy::{schema, strategy};
-use crate::storage::backend::{self, BackendOp};
+use crate::storage::backend;
 
 use super::decision;
-use super::utils;
 
 pub const PORTFOLIO_FILENAME: &str = "portfolio.yaml";
 pub const FUND_DIAGRAM_FILENAME: &str = "fund_diagram.html";
@@ -23,6 +22,8 @@ pub struct StockTradeInfo {
 
 pub struct Backtesting {
     pub config: config::Config,
+    pub crawler: Rc<dyn crawler::Crawler>,
+    pub backend_op: Rc<dyn backend::BackendOp>,
     pub strategy: strategy::Strategies,
     pub start_date: chrono::NaiveDate,
     pub end_date: chrono::NaiveDate,
@@ -31,35 +32,33 @@ pub struct Backtesting {
     pub portfolios: Vec<decision::Portfolio>,
 }
 
-impl std::default::Default for Backtesting {
-    fn default() -> Self {
+impl Backtesting {
+    pub fn new(config: config::Config, crawler: Rc<dyn crawler::Crawler>, backend_op: Rc<dyn backend::BackendOp>, strategy: strategy::Strategies) -> Self {
         Backtesting {
-            config: config::Config::default(),
-            strategy: strategy::Strategies::BollingerBand,
+            config: config,
+            crawler: crawler,
+            backend_op: backend_op,
+            strategy: strategy,
             start_date: chrono::NaiveDate::from_ymd(1970, 1, 1),
             end_date: chrono::NaiveDate::from_ymd(1970, 1, 1),
             liquidity: 200000,
-            stocks_hold_num: 2,
+            stocks_hold_num: 5,
             portfolios: Vec::new(),
         }
     }
-}
 
-impl Backtesting {
-    pub fn run(&mut self) {
-        let crawler = Rc::new(finmind::Finmind::new(&self.config.finmind_token));
-        let backend_op = Rc::new(backend::SledBackend::new(&self.config.db_path).unwrap());
-        let strategy = Rc::new(strategy::StrategyFactory::get(self.strategy.clone(), backend_op.clone()));
-        let utils = utils::Utils::new(crawler.clone(), backend_op.clone());
-        let mut decision = decision::Decision::new(crawler.clone(), backend_op.clone(), strategy);
+    pub fn run(&mut self, start_date: chrono::NaiveDate, end_date: chrono::NaiveDate) {
+        self.start_date = start_date;
+        self.end_date = end_date;
+
+        let strategy = Rc::new(strategy::StrategyFactory::get(self.strategy.clone(), self.backend_op.clone()));
+        let mut decision = decision::Decision::new(self.crawler.clone(), self.backend_op.clone(), strategy);
         let mut date = self.start_date;
         let mut stocks_hold = HashMap::new();
         let mut trade_stocks = HashMap::new();
 
         decision.liquidity = self.liquidity;
         decision.stocks_hold_num = self.stocks_hold_num;
-
-        utils.update_raw_data(self.start_date, self.end_date).unwrap();
 
         while date <= self.end_date {
             let portfolio_opt = decision.calc_portfolio(date).unwrap();
@@ -86,12 +85,11 @@ impl Backtesting {
     }
 
     fn get_full_path(&self, filename: &str) -> String {
-        self.config.portfolio_path.to_owned() + filename
+        self.config.portfolio_path.to_owned() + "/" + filename
     }
 
     fn get_stock_trade_info(&self, stock_id: &str, trade_series: &Vec<(chrono::NaiveDate, chrono::NaiveDate)>) -> StockTradeInfo {
-        let backend_op = backend::SledBackend::new(&self.config.db_path).unwrap();
-        let records = backend_op.query_by_range(&stock_id, self.start_date, self.end_date).unwrap();
+        let records = self.backend_op.query_by_range(&stock_id, self.start_date, self.end_date).unwrap();
 
         StockTradeInfo {
             data_series: records,

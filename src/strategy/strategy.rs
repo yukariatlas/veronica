@@ -6,7 +6,6 @@ use crate::dataview::view;
 use crate::storage::backend;
 
 use super::bollinger_band;
-use super::schema::RawData;
 
 #[derive(Clone)]
 pub enum Strategies {
@@ -15,7 +14,7 @@ pub enum Strategies {
 
 #[derive(Debug, Clone, Eq)]
 pub struct Score {
-    pub point: u64,
+    pub point: i64,
     pub trading_volume: u64,
 }
 
@@ -83,7 +82,7 @@ pub enum Strategy {
 pub trait StrategyAPI {
     fn analyze(&self, stock_id: &str, assess_date: chrono::NaiveDate) -> Result<Score, Error>;
     fn settle_check(&self, stock_id: &str, hold_date: chrono::NaiveDate, assess_date: chrono::NaiveDate) -> Result<bool, Error>;
-    fn export_view(&self, stock_id: &str, records: &Vec<RawData>) -> Result<(), Error>;
+    fn draw_view(&self, stock_id: &str) -> Result<(), Error>;
 }
 
 impl StrategyAPI for Strategy {
@@ -97,9 +96,9 @@ impl StrategyAPI for Strategy {
             Strategy::BollingerBand(ref bollinger_band) => bollinger_band.settle_check(stock_id, hold_date, assess_date),
         }
     }
-    fn export_view(&self, stock_id: &str, records: &Vec<RawData>) -> Result<(), Error> {
+    fn draw_view(&self, stock_id: &str) -> Result<(), Error> {
         match *self {
-            Strategy::BollingerBand(ref bollinger_band) => bollinger_band.export_view(stock_id, records),
+            Strategy::BollingerBand(ref bollinger_band) => bollinger_band.draw_view(stock_id),
         }
     }
 }

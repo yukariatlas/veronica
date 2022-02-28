@@ -111,7 +111,7 @@ impl Decision {
             if self.stocks_hold.len() + stocks_selected.len() == self.stocks_hold_num {
                 break;
             }
-            if score.point == 0 {
+            if score.point <= 0 {
                 break;
             }
             if self.stocks_hold.iter().position(|(_stock_id, _)| _stock_id == stock_id).is_none() {
@@ -123,10 +123,6 @@ impl Decision {
     }
 
     fn get_settle_stocks(&self, assess_date: chrono::NaiveDate) -> Result<Vec<String>, Error> {
-        if !self.is_trading_date(assess_date)? {
-            return Ok(vec![]);
-        }
-
         let mut stocks_settled = Vec::new();
 
         for (stock_id, (hold_date, _)) in &self.stocks_hold {
@@ -136,10 +132,6 @@ impl Decision {
         }
 
         Ok(stocks_settled)
-    }
-
-    pub fn is_trading_date(&self, date: chrono::NaiveDate) -> Result<bool, Error> {
-        Ok(self.backend_op.query("0050", date)?.is_some())
     }
 
     fn handle_settle_stocks(&mut self, assess_date: chrono::NaiveDate, portfolio: &mut Portfolio) -> Result<(), Error> {
@@ -202,11 +194,20 @@ impl Decision {
         Ok(())
     }
 
+    fn has_trading_data(&self, assess_date: chrono::NaiveDate) -> Result<bool, Error> {
+        for stock_id in self.stocks_hold.keys().cloned() {
+            if self.backend_op.query(&stock_id, assess_date)?.is_none() {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+
     pub fn calc_portfolio(&mut self, assess_date: chrono::NaiveDate) -> Result<Option<Portfolio>, Error> {
-        if !self.is_trading_date(assess_date)? {
+        if !self.has_trading_data(assess_date)? {
             return Ok(None);
         }
- 
+
         let mut portfolio = Portfolio {
             date: assess_date,
             stocks_selected: Vec::new(),
@@ -219,15 +220,6 @@ impl Decision {
         self.handle_hold_stocks(assess_date, &mut portfolio)?;
         self.handle_selected_stocks(assess_date, &mut portfolio)?;
         Ok(Some(portfolio))
-    }
-
-    pub fn export_diagram_view(&self) -> Result<(), Error> {
-        for (stock_id, _) in &self.stocks_hold {
-            let records = self.backend_op.query_all(stock_id)?;
-
-            self.strategy.export_view(stock_id, &records)?;
-        }
-        Ok(())
     }
 }
 
@@ -280,7 +272,7 @@ mod decision_test {
                         point: 0,
                         trading_volume: 0
                     }),
-                    _ => return Err(strategy::Error::RecordNotFound),
+                    _ => return Ok(strategy::Score::default()),
                 }
             });
 
@@ -336,7 +328,7 @@ mod decision_test {
                         point: 4,
                         trading_volume: 0
                     }),
-                    _ => return Err(strategy::Error::RecordNotFound),
+                    _ => return Ok(strategy::Score::default()),
                 }
             });
 
@@ -380,7 +372,7 @@ mod decision_test {
                     }),
                     "0051" => return Ok(strategy::Score::default()),
                     "0052" => return Ok(strategy::Score::default()),
-                    _ => return Err(strategy::Error::RecordNotFound),
+                    _ => return Ok(strategy::Score::default()),
                 }
             });
         mock_strategy.expect_settle_check()
@@ -435,7 +427,7 @@ mod decision_test {
                         point: 1,
                         trading_volume: 0
                     }),
-                    _ => return Err(strategy::Error::RecordNotFound),
+                    _ => return Ok(strategy::Score::default()),
                 }
             });
 
@@ -479,7 +471,7 @@ mod decision_test {
                         point: 2,
                         trading_volume: 0
                     }),
-                    _ => return Err(strategy::Error::RecordNotFound),
+                    _ => return Ok(strategy::Score::default()),
                 }
             });
         mock_strategy.expect_settle_check()
@@ -527,10 +519,10 @@ mod decision_test {
             .returning(|stock_id, assess_date| {
                 match stock_id {
                     "0050" => return Ok(strategy::Score {
-                        point: (assess_date == chrono::NaiveDate::from_ymd(1970, 1, 1)) as u64,
+                        point: (assess_date == chrono::NaiveDate::from_ymd(1970, 1, 1)) as i64,
                         trading_volume: 0
                     }),
-                    _ => return Err(strategy::Error::RecordNotFound),
+                    _ => return Ok(strategy::Score::default()),
                 }
             });
         mock_strategy.expect_settle_check()
@@ -607,7 +599,7 @@ mod decision_test {
                             point: 0,
                             trading_volume: 0,
                         }),
-                        _ => return Err(strategy::Error::RecordNotFound),
+                        _ => return Ok(strategy::Score::default()),
                     },
                     "0051" => match &assess_date.format("%Y-%m-%d").to_string()[..] {
                         "1970-01-01" => return Ok(strategy::Score {
@@ -618,9 +610,9 @@ mod decision_test {
                             point: 0,
                             trading_volume: 0,
                         }),
-                        _ => return Err(strategy::Error::RecordNotFound),
+                        _ => return Ok(strategy::Score::default()),
                     }
-                    _ => return Err(strategy::Error::RecordNotFound),
+                    _ => return Ok(strategy::Score::default()),
                 }
             });
         mock_strategy.expect_settle_check()
