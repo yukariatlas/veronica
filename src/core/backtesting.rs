@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::config::config;
 use crate::crawler::crawler;
 use crate::export::export;
-use crate::strategy::{schema, strategy};
 use crate::storage::backend;
+use crate::strategy::{schema, strategy};
 
 use super::decision;
 
@@ -33,7 +33,12 @@ pub struct Backtesting {
 }
 
 impl Backtesting {
-    pub fn new(config: config::Config, crawler: Rc<dyn crawler::Crawler>, backend_op: Rc<dyn backend::BackendOp>, strategy: strategy::Strategies) -> Self {
+    pub fn new(
+        config: config::Config,
+        crawler: Rc<dyn crawler::Crawler>,
+        backend_op: Rc<dyn backend::BackendOp>,
+        strategy: strategy::Strategies,
+    ) -> Self {
         Backtesting {
             config: config,
             crawler: crawler,
@@ -51,8 +56,12 @@ impl Backtesting {
         self.start_date = start_date;
         self.end_date = end_date;
 
-        let strategy = Rc::new(strategy::StrategyFactory::get(self.strategy.clone(), self.backend_op.clone()));
-        let mut decision = decision::Decision::new(self.crawler.clone(), self.backend_op.clone(), strategy);
+        let strategy = Rc::new(strategy::StrategyFactory::get(
+            self.strategy.clone(),
+            self.backend_op.clone(),
+        ));
+        let mut decision =
+            decision::Decision::new(self.crawler.clone(), self.backend_op.clone(), strategy);
         let mut date = self.start_date;
         let mut stocks_hold = HashMap::new();
         let mut trade_stocks = HashMap::new();
@@ -69,7 +78,10 @@ impl Backtesting {
                 for stock_info in &portfolio.stocks_settled {
                     let hold_date = stocks_hold.get(&stock_info.stock_id).unwrap();
 
-                    trade_stocks.entry(stock_info.stock_id.to_owned()).or_insert(Vec::new()).push((*hold_date, date));
+                    trade_stocks
+                        .entry(stock_info.stock_id.to_owned())
+                        .or_insert(Vec::new())
+                        .push((*hold_date, date));
                     stocks_hold.remove(&stock_info.stock_id);
                 }
                 for stock_info in &portfolio.stocks_selected {
@@ -88,8 +100,15 @@ impl Backtesting {
         self.config.portfolio_path.to_owned() + "/" + filename
     }
 
-    fn get_stock_trade_info(&self, stock_id: &str, trade_series: &Vec<(chrono::NaiveDate, chrono::NaiveDate)>) -> StockTradeInfo {
-        let records = self.backend_op.query_by_range(&stock_id, self.start_date, self.end_date).unwrap();
+    fn get_stock_trade_info(
+        &self,
+        stock_id: &str,
+        trade_series: &Vec<(chrono::NaiveDate, chrono::NaiveDate)>,
+    ) -> StockTradeInfo {
+        let records = self
+            .backend_op
+            .query_by_range(&stock_id, self.start_date, self.end_date)
+            .unwrap();
 
         StockTradeInfo {
             data_series: records,
@@ -97,21 +116,32 @@ impl Backtesting {
         }
     }
 
-    fn export_trade(&self, trade_stocks: &HashMap<String, Vec<(chrono::NaiveDate, chrono::NaiveDate)>>) {
+    fn export_trade(
+        &self,
+        trade_stocks: &HashMap<String, Vec<(chrono::NaiveDate, chrono::NaiveDate)>>,
+    ) {
         std::fs::create_dir_all(&self.config.portfolio_path).unwrap();
 
         for (stock_id, trade_series) in trade_stocks {
-            export::to_yaml(&self.get_full_path(&(stock_id.to_owned() + ".yaml")),
-                &self.get_stock_trade_info(&stock_id, &trade_series));
+            export::to_yaml(
+                &self.get_full_path(&(stock_id.to_owned() + ".yaml")),
+                &self.get_stock_trade_info(&stock_id, &trade_series),
+            );
         }
         export::to_yaml(&self.get_full_path(PORTFOLIO_FILENAME), &self.portfolios);
     }
 
-    fn draw_diagram(&self, trade_stocks: &HashMap<String, Vec<(chrono::NaiveDate, chrono::NaiveDate)>>) {
+    fn draw_diagram(
+        &self,
+        trade_stocks: &HashMap<String, Vec<(chrono::NaiveDate, chrono::NaiveDate)>>,
+    ) {
         std::fs::create_dir_all(&self.config.portfolio_path).unwrap();
 
         for (stock_id, trade_series) in trade_stocks {
-            self.draw_trade_diagram(&stock_id, &self.get_stock_trade_info(&stock_id, &trade_series));
+            self.draw_trade_diagram(
+                &stock_id,
+                &self.get_stock_trade_info(&stock_id, &trade_series),
+            );
         }
         self.draw_fund_diagram();
     }
@@ -150,9 +180,14 @@ impl Backtesting {
             );
         }
 
-        let trace = plotly::Candlestick::new(date_series.clone(),
-            open_series.clone(), high_series.clone(), low_series.clone(), close_series.clone())
-            .name(&stock_id);
+        let trace = plotly::Candlestick::new(
+            date_series.clone(),
+            open_series.clone(),
+            high_series.clone(),
+            low_series.clone(),
+            close_series.clone(),
+        )
+        .name(&stock_id);
 
         plot.add_trace(trace);
         plot.set_layout(layout);

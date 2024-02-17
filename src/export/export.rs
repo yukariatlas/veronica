@@ -3,3 +3,4 @@ pub fn to_yaml<T: serde::Serialize>(file_path: &str, views: &T) {
 
     std::fs::write(file_path, value).expect("Failed to write yaml");
 }
+

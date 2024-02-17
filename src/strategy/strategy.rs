@@ -81,19 +81,33 @@ pub enum Strategy {
 #[mockall::automock]
 pub trait StrategyAPI {
     fn analyze(&self, stock_id: &str, assess_date: chrono::NaiveDate) -> Result<Score, Error>;
-    fn settle_check(&self, stock_id: &str, hold_date: chrono::NaiveDate, assess_date: chrono::NaiveDate) -> Result<bool, Error>;
+    fn settle_check(
+        &self,
+        stock_id: &str,
+        hold_date: chrono::NaiveDate,
+        assess_date: chrono::NaiveDate,
+    ) -> Result<bool, Error>;
     fn draw_view(&self, stock_id: &str) -> Result<(), Error>;
 }
 
 impl StrategyAPI for Strategy {
     fn analyze(&self, stock_id: &str, assess_date: chrono::NaiveDate) -> Result<Score, Error> {
         match *self {
-            Strategy::BollingerBand(ref bollinger_band) => bollinger_band.analyze(stock_id, assess_date),
+            Strategy::BollingerBand(ref bollinger_band) => {
+                bollinger_band.analyze(stock_id, assess_date)
+            }
         }
     }
-    fn settle_check(&self, stock_id: &str, hold_date: chrono::NaiveDate, assess_date: chrono::NaiveDate) -> Result<bool, Error> {
+    fn settle_check(
+        &self,
+        stock_id: &str,
+        hold_date: chrono::NaiveDate,
+        assess_date: chrono::NaiveDate,
+    ) -> Result<bool, Error> {
         match *self {
-            Strategy::BollingerBand(ref bollinger_band) => bollinger_band.settle_check(stock_id, hold_date, assess_date),
+            Strategy::BollingerBand(ref bollinger_band) => {
+                bollinger_band.settle_check(stock_id, hold_date, assess_date)
+            }
         }
     }
     fn draw_view(&self, stock_id: &str) -> Result<(), Error> {
@@ -108,8 +122,10 @@ pub struct StrategyFactory {}
 impl StrategyFactory {
     pub fn get(strategy: Strategies, backend_op: Rc<dyn backend::BackendOp>) -> Strategy {
         match strategy {
-            Strategies::BollingerBand => Strategy::BollingerBand(
-                bollinger_band::Strategy { backend_op: backend_op }),
+            Strategies::BollingerBand => Strategy::BollingerBand(bollinger_band::Strategy {
+                backend_op: backend_op,
+            }),
         }
     }
 }
+

@@ -1,5 +1,5 @@
-use serde::{Serialize, Deserialize};
 use chrono::NaiveDate;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct RawData {
@@ -16,9 +16,16 @@ pub struct RawData {
 impl From<(f64, f64, f64, f64, f64, NaiveDate, u64, u64)> for RawData {
     fn from(
         (open, high, low, close, spread, date, trading_volume, trading_money): (
-            f64, f64, f64, f64, f64, NaiveDate, u64, u64
+            f64,
+            f64,
+            f64,
+            f64,
+            f64,
+            NaiveDate,
+            u64,
+            u64,
         ),
-     ) -> Self {
+    ) -> Self {
         Self {
             open: open,
             high: high,
@@ -53,3 +60,4 @@ impl std::default::Default for RawData {
         }
     }
 }
+

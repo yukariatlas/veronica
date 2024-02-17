@@ -33,10 +33,14 @@ impl Utils {
     pub fn new(crawler: Rc<dyn crawler::Crawler>, backend_op: Rc<dyn backend::BackendOp>) -> Self {
         Utils {
             crawler: crawler,
-            backend_op: backend_op
+            backend_op: backend_op,
         }
     }
-    pub fn update_raw_data(&self, start_date: chrono::NaiveDate, end_date: chrono::NaiveDate) -> Result<(), Error> {
+    pub fn update_raw_data(
+        &self,
+        start_date: chrono::NaiveDate,
+        end_date: chrono::NaiveDate,
+    ) -> Result<(), Error> {
         let mut data = Vec::new();
         let stock_list = self.crawler.get_stock_list()?;
 
@@ -54,19 +58,20 @@ impl Utils {
                         for record in records {
                             data.push((stock_id.clone(), record));
                         }
-                    },
+                    }
                     Err(err) => match err {
                         crawler::Error::RateLimitReached => {
                             print!("The number of request reaches limitation, sleep one hour and continue...\n");
                             thread::sleep(Duration::from_secs(60 * 60));
                             continue;
-                        },
+                        }
                         _ => return Err(Error::Crawler(err)),
-                    }
-                }
+                    },
+                };
             }
             self.backend_op.batch_insert(&data)?;
         }
         Ok(())
     }
 }
+

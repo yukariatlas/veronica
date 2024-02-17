@@ -1,7 +1,7 @@
-use std::result::Result;
-use serde::Deserialize;
 use crate::crawler::crawler;
 use crate::strategy::schema;
+use serde::Deserialize;
+use std::result::Result;
 
 const FINMIND_V4_URL: &str = "https://api.finmindtrade.com/api/v4/data";
 const DEFAULT_DATE_FORMAT: &str = "%Y-%m-%d";
@@ -34,7 +34,7 @@ impl From<TaiwanStockPrice> for schema::RawData {
             spread: record.spread,
             date: record.date,
             trading_volume: record.trading_volume,
-            trading_money: record.trading_money
+            trading_money: record.trading_money,
         }
     }
 }
@@ -54,7 +54,7 @@ pub struct Finmind {
 impl Finmind {
     pub fn new(token: &str) -> Self {
         Finmind {
-            token: token.to_owned()
+            token: token.to_owned(),
         }
     }
 }
@@ -75,9 +75,9 @@ impl crawler::Crawler for Finmind {
                     args.end_date.format(DEFAULT_DATE_FORMAT).to_string(),
                 ),
                 ("token", self.token.to_owned()),
-                ],
-            )?;
-            
+            ],
+        )?;
+
         let resp: Response = reqwest::blocking::get(url)?.json()?;
 
         match resp.status {
@@ -88,3 +88,4 @@ impl crawler::Crawler for Finmind {
         }
     }
 }
+

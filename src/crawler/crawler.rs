@@ -1,7 +1,7 @@
-use std::{result::Result, io::Read};
+use crate::strategy::schema;
 use chrono::NaiveDate;
 use mockall::automock;
-use crate::strategy::schema;
+use std::{io::Read, result::Result};
 
 const STOCK_MONTH_REVENUE_URL: &str = "https://quality.data.gov.tw/dq_download_csv.php?nid=11549&md5_url=da96048521360db9f23a2b47c9c31155";
 
@@ -29,7 +29,7 @@ pub trait Crawler {
         let mut resp = reqwest::blocking::get(STOCK_MONTH_REVENUE_URL)?;
         let mut buf = Vec::new();
         let mut stock_list = Vec::new();
-        
+
         resp.read_to_end(&mut buf)?;
         for result in csv::Reader::from_reader(&*buf).records() {
             let record = result?;
@@ -63,3 +63,4 @@ impl From<csv::Error> for Error {
         Error::Csv(err)
     }
 }
+

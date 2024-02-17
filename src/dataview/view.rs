@@ -1,10 +1,10 @@
-use std::result::Result;
 use chrono::NaiveDate;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::result::Result;
 use ta::indicators::{SimpleMovingAverage, StandardDeviation};
 use ta::Next;
 
-use crate::strategy::{schema, bollinger_band};
+use crate::strategy::{bollinger_band, schema};
 
 pub enum Views {
     None,
@@ -30,7 +30,7 @@ pub struct BollingerBandView {
 
 pub trait Transform {
     type View;
-    
+
     fn transform(records: &Vec<schema::RawData>) -> Result<Vec<Self::View>, Error>;
 }
 
@@ -62,7 +62,7 @@ impl Transform for BollingerBandView {
         let mut views = Vec::new();
         let mut sd = StandardDeviation::new(bollinger_band::PERIOD)?;
         let mut sma = SimpleMovingAverage::new(bollinger_band::PERIOD)?;
-        
+
         for (idx, record) in records.iter().enumerate() {
             let mut view = BollingerBandView {
                 open: record.open,
@@ -75,12 +75,12 @@ impl Transform for BollingerBandView {
             };
             view.sma = sma.next((record.high + record.low + record.close) / 3.0);
             view.sd = sd.next((record.high + record.low + record.close) / 3.0);
-            
+
             if idx + 1 >= bollinger_band::PERIOD {
                 views.push(view);
             }
         }
-        
+
         Ok(views)
     }
 }

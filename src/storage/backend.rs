@@ -28,8 +28,17 @@ impl From<bincode::Error> for Error {
 #[mockall::automock]
 pub trait BackendOp {
     fn batch_insert(&self, records: &Vec<(String, schema::RawData)>) -> Result<(), Error>;
-    fn query(&self, stock_id: &str, date: chrono::NaiveDate) -> Result<Option<schema::RawData>, Error>;
-    fn query_by_range(&self, stock_id: &str, start_date: chrono::NaiveDate, end_date: chrono::NaiveDate) -> Result<Vec<schema::RawData>, Error>;
+    fn query(
+        &self,
+        stock_id: &str,
+        date: chrono::NaiveDate,
+    ) -> Result<Option<schema::RawData>, Error>;
+    fn query_by_range(
+        &self,
+        stock_id: &str,
+        start_date: chrono::NaiveDate,
+        end_date: chrono::NaiveDate,
+    ) -> Result<Vec<schema::RawData>, Error>;
     fn query_all(&self, stock_id: &str) -> Result<Vec<schema::RawData>, Error>;
     fn batch_delete(&self, records: &Vec<(String, chrono::NaiveDate)>) -> Result<(), Error>;
 }
@@ -41,7 +50,7 @@ pub struct SledBackend {
 impl SledBackend {
     pub fn new(db_path: &str) -> Result<Self, Error> {
         Ok(SledBackend {
-            db_op: sled::open(db_path).unwrap()
+            db_op: sled::open(db_path).unwrap(),
         })
     }
 }
@@ -59,7 +68,11 @@ impl BackendOp for SledBackend {
         self.db_op.apply_batch(batch)?;
         Ok(())
     }
-    fn query(&self, stock_id: &str, date: chrono::NaiveDate) -> Result<Option<schema::RawData>, Error> {
+    fn query(
+        &self,
+        stock_id: &str,
+        date: chrono::NaiveDate,
+    ) -> Result<Option<schema::RawData>, Error> {
         let key = stock_id.to_owned() + "_" + &date.to_string();
 
         match self.db_op.get(key)? {
@@ -67,7 +80,12 @@ impl BackendOp for SledBackend {
             None => Ok(None),
         }
     }
-    fn query_by_range(&self, stock_id: &str, start_date: chrono::NaiveDate, end_date: chrono::NaiveDate) -> Result<Vec<schema::RawData>, Error> {
+    fn query_by_range(
+        &self,
+        stock_id: &str,
+        start_date: chrono::NaiveDate,
+        end_date: chrono::NaiveDate,
+    ) -> Result<Vec<schema::RawData>, Error> {
         let start = stock_id.to_owned() + "_" + &start_date.to_string();
         let end = stock_id.to_owned() + "_" + &end_date.succ().to_string();
         let mut iter = self.db_op.range(start..end);

@@ -1,6 +1,6 @@
 use std::option::Option;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Config {
@@ -19,8 +19,7 @@ impl std::default::Default for Config {
     }
 }
 
-pub fn load_config(config_path: &str) -> Option<Config>
-{
+pub fn load_config(config_path: &str) -> Option<Config> {
     let data = std::fs::read_to_string(config_path).ok();
 
     if data.is_none() {
@@ -28,3 +27,4 @@ pub fn load_config(config_path: &str) -> Option<Config>
     }
     serde_yaml::from_str(&data.unwrap()).ok()
 }
+

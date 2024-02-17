@@ -13,9 +13,18 @@ pub struct Strategy {
 }
 
 impl Strategy {
-    fn get_views(&self, stock_id: &str, start_date: chrono::NaiveDate, end_date: chrono::NaiveDate) -> Result<Vec<view::BollingerBandView>, strategy::Error> {
-        let calc_date = start_date.checked_sub_signed(chrono::Duration::days(PERIOD as i64 * 2)).ok_or(strategy::Error::BadOperation)?;
-        let records = self.backend_op.query_by_range(&stock_id, calc_date, end_date)?;
+    fn get_views(
+        &self,
+        stock_id: &str,
+        start_date: chrono::NaiveDate,
+        end_date: chrono::NaiveDate,
+    ) -> Result<Vec<view::BollingerBandView>, strategy::Error> {
+        let calc_date = start_date
+            .checked_sub_signed(chrono::Duration::days(PERIOD as i64 * 2))
+            .ok_or(strategy::Error::BadOperation)?;
+        let records = self
+            .backend_op
+            .query_by_range(&stock_id, calc_date, end_date)?;
         let views = view::BollingerBandView::transform(&records)?;
 
         if records.len() < PERIOD {
@@ -33,8 +42,14 @@ impl Strategy {
 }
 
 impl strategy::StrategyAPI for Strategy {
-    fn analyze(&self, stock_id: &str, assess_date: chrono::NaiveDate) -> Result<strategy::Score, strategy::Error> {
-        let analyze_date = assess_date.checked_sub_signed(chrono::Duration::days(ANALYZE_RANGE as i64 * 2)).ok_or(strategy::Error::BadOperation)?;
+    fn analyze(
+        &self,
+        stock_id: &str,
+        assess_date: chrono::NaiveDate,
+    ) -> Result<strategy::Score, strategy::Error> {
+        let analyze_date = assess_date
+            .checked_sub_signed(chrono::Duration::days(ANALYZE_RANGE as i64 * 2))
+            .ok_or(strategy::Error::BadOperation)?;
         let mut score = strategy::Score::default();
         let views = self.get_views(stock_id, analyze_date, assess_date)?;
 
@@ -86,7 +101,12 @@ impl strategy::StrategyAPI for Strategy {
         Ok(score)
     }
 
-    fn settle_check(&self, stock_id: &str, hold_date: chrono::NaiveDate, assess_date: chrono::NaiveDate) -> Result<bool, strategy::Error> {
+    fn settle_check(
+        &self,
+        stock_id: &str,
+        hold_date: chrono::NaiveDate,
+        assess_date: chrono::NaiveDate,
+    ) -> Result<bool, strategy::Error> {
         let views = self.get_views(stock_id, hold_date, assess_date)?;
 
         if views.len() == 0 {
@@ -143,9 +163,14 @@ impl strategy::StrategyAPI for Strategy {
             lower_one_sd_band_series.push(view.sma - view.sd);
         }
 
-        let trace_1 = plotly::Candlestick::new(date_series.clone(),
-            open_series.clone(), high_series.clone(), low_series.clone(), close_series.clone())
-            .name("Candlestick");
+        let trace_1 = plotly::Candlestick::new(
+            date_series.clone(),
+            open_series.clone(),
+            high_series.clone(),
+            low_series.clone(),
+            close_series.clone(),
+        )
+        .name("Candlestick");
         let trace_2 = plotly::Scatter::new(date_series.clone(), sma_series.clone())
             .mode(plotly::common::Mode::Lines)
             .name("20 Period SMA");
@@ -173,3 +198,4 @@ impl strategy::StrategyAPI for Strategy {
         Ok(())
     }
 }
+
