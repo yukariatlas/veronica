@@ -87,7 +87,7 @@ impl BackendOp for SledBackend {
         end_date: chrono::NaiveDate,
     ) -> Result<Vec<schema::RawData>, Error> {
         let start = stock_id.to_owned() + "_" + &start_date.to_string();
-        let end = stock_id.to_owned() + "_" + &end_date.succ().to_string();
+        let end = stock_id.to_owned() + "_" + &end_date.succ_opt().unwrap().to_string();
         let mut iter = self.db_op.range(start..end);
         let mut records = Vec::new();
 

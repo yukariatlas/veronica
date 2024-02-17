@@ -54,7 +54,7 @@ pub struct Portfolio {
 impl std::default::Default for Portfolio {
     fn default() -> Self {
         Portfolio {
-            date: chrono::NaiveDate::from_ymd(1970, 1, 1),
+            date: chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
             stocks_selected: Vec::new(),
             stocks_hold: Vec::new(),
             stocks_settled: Vec::new(),
@@ -347,7 +347,7 @@ mod decision_test {
             Rc::new(mock_strategy),
         );
         let portfolio = decision
-            .calc_portfolio(chrono::NaiveDate::from_ymd(1970, 1, 1))
+            .calc_portfolio(chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap())
             .unwrap()
             .unwrap();
 
@@ -424,7 +424,7 @@ mod decision_test {
             Rc::new(mock_strategy),
         );
         let portfolio = decision
-            .calc_portfolio(chrono::NaiveDate::from_ymd(1970, 1, 1))
+            .calc_portfolio(chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap())
             .unwrap()
             .unwrap();
         let selected_stock_ids: Vec<String> = portfolio
@@ -491,7 +491,7 @@ mod decision_test {
         decision.stocks_hold_num = 4;
 
         let mut portfolio = decision
-            .calc_portfolio(chrono::NaiveDate::from_ymd(1970, 1, 1))
+            .calc_portfolio(chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap())
             .unwrap()
             .unwrap();
 
@@ -499,7 +499,7 @@ mod decision_test {
             selected_stock_ids.push(stock_info.stock_id);
         }
         portfolio = decision
-            .calc_portfolio(chrono::NaiveDate::from_ymd(1970, 1, 2))
+            .calc_portfolio(chrono::NaiveDate::from_ymd_opt(1970, 1, 2).unwrap())
             .unwrap()
             .unwrap();
         for stock_info in portfolio.stocks_selected {
@@ -551,7 +551,7 @@ mod decision_test {
         decision.liquidity = 8;
 
         let portfolio = decision
-            .calc_portfolio(chrono::NaiveDate::from_ymd(1970, 1, 1))
+            .calc_portfolio(chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap())
             .unwrap()
             .unwrap();
 
@@ -605,12 +605,12 @@ mod decision_test {
 
         decision.liquidity = 8;
         decision
-            .calc_portfolio(chrono::NaiveDate::from_ymd(1970, 1, 1))
+            .calc_portfolio(chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap())
             .unwrap()
             .unwrap();
 
         let portfolio = decision
-            .calc_portfolio(chrono::NaiveDate::from_ymd(1970, 1, 2))
+            .calc_portfolio(chrono::NaiveDate::from_ymd_opt(1970, 1, 2).unwrap())
             .unwrap()
             .unwrap();
 
@@ -648,7 +648,8 @@ mod decision_test {
             .returning(|stock_id, assess_date| match stock_id {
                 "0050" => {
                     return Ok(strategy::Score {
-                        point: (assess_date == chrono::NaiveDate::from_ymd(1970, 1, 1)) as i64,
+                        point: (assess_date == chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap())
+                            as i64,
                         trading_volume: 0,
                     })
                 }
@@ -666,12 +667,12 @@ mod decision_test {
 
         decision.liquidity = 8;
         decision
-            .calc_portfolio(chrono::NaiveDate::from_ymd(1970, 1, 1))
+            .calc_portfolio(chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap())
             .unwrap()
             .unwrap();
 
         let portfolio = decision
-            .calc_portfolio(chrono::NaiveDate::from_ymd(1970, 1, 2))
+            .calc_portfolio(chrono::NaiveDate::from_ymd_opt(1970, 1, 2).unwrap())
             .unwrap()
             .unwrap();
 
@@ -779,17 +780,16 @@ mod decision_test {
         decision.liquidity = 20;
 
         let mut portfolio = decision
-            .calc_portfolio(chrono::NaiveDate::from_ymd(1970, 1, 1))
+            .calc_portfolio(chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap())
             .unwrap()
             .unwrap();
 
         assert_eq!(portfolio.liquidity, 4);
 
         portfolio = decision
-            .calc_portfolio(chrono::NaiveDate::from_ymd(1970, 1, 2))
+            .calc_portfolio(chrono::NaiveDate::from_ymd_opt(1970, 1, 2).unwrap())
             .unwrap()
             .unwrap();
         assert_eq!(portfolio.liquidity, 36);
     }
 }
-

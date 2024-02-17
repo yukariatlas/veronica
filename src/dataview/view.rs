@@ -47,7 +47,7 @@ impl Default for BollingerBandView {
             high: 0.0,
             low: 0.0,
             close: 0.0,
-            date: chrono::NaiveDate::from_ymd(1970, 1, 1),
+            date: chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
             volume: 0,
             sma: 0.0,
             sd: 0.0,

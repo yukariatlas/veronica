@@ -54,10 +54,9 @@ impl std::default::Default for RawData {
             low: 0.0,
             close: 0.0,
             spread: 0.0,
-            date: chrono::NaiveDate::from_ymd(1970, 1, 1),
+            date: chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
             trading_volume: 0,
             trading_money: 0,
         }
     }
 }
-

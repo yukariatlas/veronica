@@ -32,5 +32,8 @@ fn main() {
         strategy::Strategies::BollingerBand,
     );
 
-    backtesting.run(chrono::NaiveDate::from_ymd(2021, 6, 1), chrono::NaiveDate::from_ymd(2021, 12, 31));
+    backtesting.run(
+        chrono::NaiveDate::from_ymd_opt(2021, 6, 1).unwrap(),
+        chrono::NaiveDate::from_ymd_opt(2021, 12, 31).unwrap(),
+    );
 }

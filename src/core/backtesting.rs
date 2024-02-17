@@ -44,8 +44,8 @@ impl Backtesting {
             crawler: crawler,
             backend_op: backend_op,
             strategy: strategy,
-            start_date: chrono::NaiveDate::from_ymd(1970, 1, 1),
-            end_date: chrono::NaiveDate::from_ymd(1970, 1, 1),
+            start_date: chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
+            end_date: chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
             liquidity: 200000,
             stocks_hold_num: 5,
             portfolios: Vec::new(),
@@ -89,7 +89,7 @@ impl Backtesting {
                 }
                 self.portfolios.push(portfolio);
             }
-            date = date.succ();
+            date = date.succ_opt().unwrap();
         }
 
         self.export_trade(&trade_stocks);
