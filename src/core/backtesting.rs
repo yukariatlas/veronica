@@ -40,10 +40,10 @@ impl Backtesting {
         strategy: strategy::Strategies,
     ) -> Self {
         Backtesting {
-            config: config,
-            crawler: crawler,
-            backend_op: backend_op,
-            strategy: strategy,
+            config,
+            crawler,
+            backend_op,
+            strategy,
             start_date: chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
             end_date: chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
             liquidity: 200000,
