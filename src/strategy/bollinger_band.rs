@@ -163,14 +163,16 @@ impl strategy::StrategyAPI for Strategy {
             lower_one_sd_band_series.push(view.sma - view.sd);
         }
 
-        let trace_1 = plotly::Candlestick::new(
-            date_series.clone(),
-            open_series.clone(),
-            high_series.clone(),
-            low_series.clone(),
-            close_series.clone(),
-        )
-        .name("Candlestick");
+        let trace_1 = Box::new(
+            plotly::Candlestick::new(
+                date_series.clone(),
+                open_series.clone(),
+                high_series.clone(),
+                low_series.clone(),
+                close_series.clone(),
+            )
+            .name("Candlestick"),
+        );
         let trace_2 = plotly::Scatter::new(date_series.clone(), sma_series.clone())
             .mode(plotly::common::Mode::Lines)
             .name("20 Period SMA");
@@ -198,4 +200,3 @@ impl strategy::StrategyAPI for Strategy {
         Ok(())
     }
 }
-

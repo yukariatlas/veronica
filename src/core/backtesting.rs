@@ -180,18 +180,20 @@ impl Backtesting {
             );
         }
 
-        let trace = plotly::Candlestick::new(
-            date_series.clone(),
-            open_series.clone(),
-            high_series.clone(),
-            low_series.clone(),
-            close_series.clone(),
-        )
-        .name(&stock_id);
+        let trace = Box::new(
+            plotly::Candlestick::new(
+                date_series.clone(),
+                open_series.clone(),
+                high_series.clone(),
+                low_series.clone(),
+                close_series.clone(),
+            )
+            .name(&stock_id),
+        );
 
         plot.add_trace(trace);
         plot.set_layout(layout);
-        plot.to_html(self.get_full_path(&(stock_id.to_owned() + ".html")));
+        plot.write_html(self.get_full_path(&(stock_id.to_owned() + ".html")));
     }
 
     fn draw_fund_diagram(&self) {
@@ -220,6 +222,6 @@ impl Backtesting {
             .name("Fund");
 
         plot.add_trace(trace);
-        plot.to_html(self.get_full_path(FUND_DIAGRAM_FILENAME));
+        plot.write_html(self.get_full_path(FUND_DIAGRAM_FILENAME));
     }
 }
